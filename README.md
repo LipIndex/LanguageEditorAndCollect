@@ -1,0 +1,2 @@
+# LanguageEditorAndCollect
+多语言收集以及改写工具
