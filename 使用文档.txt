@@ -1,0 +1,2 @@
+debug运行：package.json 点击调试
+打包：npm run package
