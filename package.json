@@ -1,10 +1,10 @@
 {
-  "name": "多语言收集工具8.8",
-  "version": "0.8.8",
+  "name": "多语言收集工具8.9",
+  "version": "0.8.9",
   "private": true,
   "main": "main.js",
   "author": "Peng Li",
-  "description": "多语言收集工具8.8",
+  "description": "多语言收集工具8.9",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

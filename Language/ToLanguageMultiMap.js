@@ -14,6 +14,7 @@ const { isString } = require('util');
 const { runMulti } = require('./ToLanguage');
 
 
+
 // 获取当前文件所在目录的完整路径
 var currentDirectoryPath = process.argv.slice(2) + "/";
 var pathAllExcel = currentDirectoryPath.replace("Language", "") + "Excels";
@@ -33,15 +34,18 @@ function tryReadMultiMap(dirPath) {
         let count = 0;
         let cb = () => {
             if (files.length <= 0) {
-                consoleLog("写入多场景，全部结束,一共写入" + count + "个项目", "green");
-
+                // 单项目改写完成，把本地的Language.xlsx替换最新
                 // 读取最终写入的多语言表
                 let finalLanguage = xlsx.parse(pahtExcel);
 
-                // 开始替换所有改动过场景的Language.xlsx
-                for (let f of runFiles) {
+                const languageExcelPathArr = getAllLanguageExcelPath();
 
+                // 开始替换所有改动过场景的Language.xlsx
+                for (let f of languageExcelPathArr) {
+                    let finalLanguageStr = xlsx.build(finalLanguage);
+                    fs.writeFileSync(f, finalLanguageStr);
                 }
+                consoleLog("写入多场景，全部结束,一共写入" + count + "个项目", "green");
                 resolve(true);
                 return;
             }
@@ -112,6 +116,15 @@ function getExcelPath(name) {
     if (!result) return null;
 
     return result.ExcelPath;
+}
+
+/**
+ * 获取所有Language的Excel路径
+ */
+function getAllLanguageExcelPath() {
+    let ExcelPathArr = readToJson(pathJson);
+    const project = ExcelPathArr.find(v => v.ProjectName === selectProjectName);
+    return project ? project.Projects.map(v => v.LanguagePath) : [];
 }
 
 var consoleLog;
