@@ -9,7 +9,6 @@
 
 var fs = require('fs');
 var path = require('path');
-const xlsx = require('node-xlsx').default;
 const { isString } = require('util');
 const ExcelJS = require('exceljs');
 
@@ -214,6 +213,11 @@ function tryChangeUI(dirPath, outResult = {}) {
                                 }
                             }
 
+                            if (!data) {
+                                resolve2(false);
+                                return;
+                            }
+
                             let isChange = false;
 
                             // 递归遍历
@@ -350,7 +354,7 @@ function tryChangeExcel(dirPath, outResult = {}) {
                                     cIndex = indexFind;
                                 } else {
                                     worksheet.getCell(2 + 1, sheetData[2 + 1].length).value = perfixC;
-                                    cIndex = sheetData[2 + 1].length - 1;
+                                    cIndex = sheetData[2 + 1].length;
                                 }
 
                                 // 发现了标题为Language的列
@@ -409,8 +413,9 @@ function tryChangeExcel(dirPath, outResult = {}) {
                         // 改变了就写入
                         if (isChange) {
                             consoleLog(filePath);
-                            workbook.xlsx.writeFile(filePath);
-                            resolve2(true);
+                            workbook.xlsx.writeFile(filePath).then(() => {
+                                resolve2(true);
+                            });
                         } else {
                             resolve2(true);
                         }
@@ -436,91 +441,114 @@ function hasChineseCharacters(text) {
 
 // 初始化当前的id
 function initLanguageId() {
-    const workSheetsFromFile = xlsx.parse(pahtExcel);
-    if (!workSheetsFromFile) return;
-    let sheet = workSheetsFromFile[0];
-    let sheetData = sheet.data;
+    return new Promise((resolve, reject) => {
+        workbook.xlsx.readFile(pahtExcel)
+            .then(() => {
+                // 读取第一个工作表
+                const worksheet = workbook.getWorksheet(1);
 
-    // 多语言表的最后一位的id
-    let id = 0;
-    for (let info of sheetData) {
-        if (info.length > 0 && typeof info[0] === "number" && info[0] > id) {
-            id = info[0];
-        }
-    }
-    let languageConfig = readToJson(pathJson);
-    languageConfig.genId = id;
-    writeToJson(pathJson, languageConfig);
+                // 代码中编号对应的内容替换表中的
+                let info = {};
+                const sheetValues = worksheet.getSheetValues();
+
+                let id = 0;
+                sheetValues.forEach((context, index) => {
+                    if (context[1] && typeof context[1] === "number" && context[1] > id) {
+                        id = context[1];
+                    }
+                });
+
+                let languageConfig = readToJson(pathJson);
+                languageConfig.genId = id;
+                writeToJson(pathJson, languageConfig);
+                resolve(true);
+            })
+            .catch(err => {
+                // 处理读取文件时出现的错误
+                consoleError('Error reading file:' + err);
+                resolve(false);
+            });
+    });
 }
 
 // 写入Language表
 function wirteToLanguage(keyPrefix, result, isEnd = false) {
-    workbook.xlsx.readFile(pahtExcel)
-        .then(() => {
-            // 读取第一个工作表
-            const worksheet = workbook.getWorksheet(1);
+    return new Promise((resolve, reject) => {
+        workbook.xlsx.readFile(pahtExcel)
+            .then(() => {
+                // 读取第一个工作表
+                const worksheet = workbook.getWorksheet(1);
 
-            // 代码中编号对应的内容替换表中的
-            let info = {};
-            const sheetValues = worksheet.getSheetValues();
-            for (let index = 4; index < sheetValues.length - 1; index++) {
-                let context = sheetValues[index + 1];
-                info[context[1]] = context;
-            }
-
-            // 找到中文翻译的索引
-            let chineseIndex = sheetValues[2 + 1].findIndex(value => value && value.indexOf("中文") !== -1);
-            if (chineseIndex === -1) {
-                consoleError("没有找到中文备注，请检查！！！");
-                return;
-            }
-            for (let idx in result) {
-                if (info[idx]) {
-                    info[idx][chineseIndex - 1] = result[idx];
-                } else {
-                    let key = keyPrefix + idx;
-                    let arr = [+idx, key, "", ""];
-                    arr[chineseIndex - 1] = result[idx];
-                    worksheet.addRow(arr);
+                // 代码中编号对应的内容替换表中的
+                let info = {};
+                const sheetValues = worksheet.getSheetValues();
+                for (let index = 4; index < sheetValues.length - 1; index++) {
+                    let context = sheetValues[index + 1];
+                    info[context[1]] = context;
                 }
-            }
 
-            workbook.xlsx.writeFile(pahtExcel);
+                // 找到中文翻译的索引
+                let chineseIndex = sheetValues[2 + 1].findIndex(value => value && value.indexOf("中文") !== -1);
+                if (chineseIndex === -1) {
+                    consoleError("没有找到中文备注，请检查！！！");
+                    return;
+                }
+                for (let idx in result) {
+                    if (info[idx]) {
+                        info[idx][chineseIndex - 1] = result[idx];
+                    } else {
+                        let key = keyPrefix + idx;
+                        let arr = [+idx, key, "", ""];
+                        arr[chineseIndex - 1] = result[idx];
+                        worksheet.addRow(arr);
+                    }
+                }
 
-            if (!isEnd) {
-                consoleLog("写入表格成功，还没有结束，请等待。。。");
-            } else {
-                consoleLog("当前项目收集结束，等待其他项目收集", "green");
-            }
-        })
-        .catch(err => {
-            // 处理读取文件时出现的错误
-            consoleError('Error reading file:' + err);
-        });
+                workbook.xlsx.writeFile(pahtExcel).then(() => {
+                    if (!isEnd) {
+                        consoleLog("写入表格成功，还没有结束，请等待。。。");
+                    } else {
+                        consoleLog("当前项目收集结束，等待其他项目收集", "green");
+                    }
+                    resolve(true);
+                });
+            })
+            .catch(err => {
+                // 处理读取文件时出现的错误
+                consoleError('Error reading file:' + err);
+                resolve(false);
+            });
+    });
 }
 
 // 1: {id: 1, key: UI_1001, value: "你好"}
 var languageConfigData = {};
 
 // 读Language表
-function readLanguage() {
-    const workSheetsFromFile = xlsx.parse(pahtExcel);
-    if (!workSheetsFromFile) return;
-    let sheet = workSheetsFromFile[0];
-    let sheetData = sheet.data;
+async function readLanguage() {
+    return new Promise((resolve, reject) => {
+        workbook.xlsx.readFile(pahtExcel)
+            .then(() => {
+                // 读取第一个工作表
+                const worksheet = workbook.getWorksheet(1);
 
-    // 代码中编号对应的内容替换表中的
-    let info = {};
-    for (let index = 4; index < sheetData.length; index++) {
-        let context = sheetData[index];
-        info[context[0]] = context;
-    }
+                // 代码中编号对应的内容替换表中的
+                const sheetValues = worksheet.getSheetValues();
 
-    for (let i = 4; i < sheetData.length; i++) {
-        if (!sheetData[i][0]) continue;
-        let chineaseIndex = sheetData[i].findIndex(value => hasChineseCharacters(value));
-        languageConfigData[sheetData[i][0]] = { id: sheetData[i][0], key: sheetData[i][1], value: chineaseIndex !== -1 ? sheetData[i][chineaseIndex] : sheetData[i][3] };
-    }
+                sheetValues.forEach((context, index) => {
+                    if (typeof context[1] === "number"){
+                        let chineaseIndex = context.findIndex(value => hasChineseCharacters(value));
+                        languageConfigData[context[1]] = { id: context[1], key: context[2], value: chineaseIndex !== -1 ? context[chineaseIndex] : context[4] };
+                    }
+                });
+                resolve(true);
+            })
+            .catch(err => {
+                // 处理读取文件时出现的错误
+                consoleError('Error reading file:' + err);
+                resolve(false);
+            });
+    });
 }
 
 // 多语言表中是否有当前内容一致的
@@ -568,10 +596,9 @@ function run(consoleTEXT, consoleERROR, inPrefix, rootPath, excelPath, languageE
         pahtExcel = pathAllExcel + "/" + languageExcelName;
         pathUI = currentDirectoryPath.replace("Language", "") + "UI";
 
-
         // 读取 Excel 文件
         workbook.xlsx.readFile(pahtExcel)
-            .then(() => {
+            .then(async () => {
                 // 读取第一个工作表
                 const worksheet = workbook.getWorksheet(1);
 
@@ -588,36 +615,36 @@ function run(consoleTEXT, consoleERROR, inPrefix, rootPath, excelPath, languageE
 
 
                 // 初始化多语言的id
-                initLanguageId();
+                await initLanguageId();
 
-                readLanguage();
+                await readLanguage();
 
                 // 结构 {1: "你好"}
                 var collectUILanguage = {};
-                tryChangeUI(pathUI, collectUILanguage).then(() => {
+                tryChangeUI(pathUI, collectUILanguage).then(async () => {
                     consoleLog("UI 新收集的文本：" + JSON.stringify(collectUILanguage), "blue");
 
                     // 写入Language_多语言表.xlsx
-                    wirteToLanguage("UTL_", collectUILanguage);
+                    await wirteToLanguage("UTL_", collectUILanguage);
 
-                    readLanguage();
+                    await readLanguage();
 
                     var collectExcelLanguage = {};
-                    tryChangeExcel(pathAllExcel, collectExcelLanguage).then(() => {
+                    tryChangeExcel(pathAllExcel, collectExcelLanguage).then(async () => {
                         consoleLog("Excel 新收集的文本：" + JSON.stringify(collectExcelLanguage), "blue");
 
                         // 写入Language_多语言表.xlsx
-                        wirteToLanguage("ETL_", collectExcelLanguage);
+                        await wirteToLanguage("ETL_", collectExcelLanguage);
 
-                        readLanguage();
+                        await readLanguage();
 
                         // 读取文件，写入文本
                         var collectScroptResult = {};
 
                         // 转换脚本
-                        tryChangeScript(pathZ, collectScroptResult).then(() => {
+                        tryChangeScript(pathZ, collectScroptResult).then(async () => {
                             consoleLog("Script 新收集的文本：" + JSON.stringify(collectScroptResult), "blue");
-                            wirteToLanguage("STL_", collectScroptResult, true);
+                            await wirteToLanguage("STL_", collectScroptResult, true);
                             callBack && callBack();
                             callBack = null;
                         });
@@ -650,7 +677,7 @@ function runMulti(consoleTEXT, consoleERROR, inPrefix, rootPath, excelPath, lang
 
         // 读取 Excel 文件
         workbook.xlsx.readFile(pahtExcel)
-            .then(() => {
+            .then(async () => {
                 // 读取第一个工作表
                 const worksheet = workbook.getWorksheet(1);
 
@@ -666,36 +693,36 @@ function runMulti(consoleTEXT, consoleERROR, inPrefix, rootPath, excelPath, lang
                 }
 
                 // 初始化多语言的id
-                initLanguageId();
+                await initLanguageId();
 
-                readLanguage();
+                await readLanguage();
 
                 // 结构 {1: "你好"}
                 var collectUILanguage = {};
-                tryChangeUI(pathUI, collectUILanguage).then(() => {
+                tryChangeUI(pathUI, collectUILanguage).then(async () => {
                     consoleLog("UI 新收集的文本：" + JSON.stringify(collectUILanguage), "blue");
 
                     // 写入Language_多语言表.xlsx
-                    wirteToLanguage("UTL_", collectUILanguage);
+                    await wirteToLanguage("UTL_", collectUILanguage);
 
-                    readLanguage();
+                    await readLanguage();
 
                     var collectExcelLanguage = {};
-                    tryChangeExcel(pathAllExcel, collectExcelLanguage).then(() => {
+                    tryChangeExcel(pathAllExcel, collectExcelLanguage).then(async () => {
                         consoleLog("Excel 新收集的文本：" + JSON.stringify(collectExcelLanguage), "blue");
 
                         // 写入Language_多语言表.xlsx
-                        wirteToLanguage("ETL_", collectExcelLanguage);
+                        await wirteToLanguage("ETL_", collectExcelLanguage);
 
-                        readLanguage();
+                        await readLanguage();
 
                         // 读取文件，写入文本
                         var collectScroptResult = {};
 
                         // 转换脚本
-                        tryChangeScript(pathZ, collectScroptResult).then(() => {
+                        tryChangeScript(pathZ, collectScroptResult).then(async () => {
                             consoleLog("Script 新收集的文本：" + JSON.stringify(collectScroptResult), "blue");
-                            wirteToLanguage("STL_", collectScroptResult, true);
+                            await wirteToLanguage("STL_", collectScroptResult, true);
                             callBack && callBack();
                             callBack = null;
                         });

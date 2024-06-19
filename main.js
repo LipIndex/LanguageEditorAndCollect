@@ -8,6 +8,7 @@ const { runMultiMap } = require('./Language/ToLanguageMultiMap');
 const { isString } = require('util');
 const { dialog } = require('electron/main');
 const { exec } = require('child_process');
+const autoUpdater = require('update-electron-app');
 
 const pathJson = "C:/Users/Public/Config/PathConfig.json";
 let selectProjectName = "";
@@ -30,9 +31,6 @@ function createWindow() {
     mainWindow.on('closed', function () {
         mainWindow = null;
     });
-
-
-
 
     ipcMain.on('message-from-renderer', (event, arg) => {
         console.log('Received message from renderer:', arg);
