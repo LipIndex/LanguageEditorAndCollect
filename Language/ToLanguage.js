@@ -465,7 +465,7 @@ function initLanguageId() {
             })
             .catch(err => {
                 // 处理读取文件时出现的错误
-                consoleError('Error reading file:' + err);
+                consoleError('Error reading file 4:' + err);
                 resolve(false);
             });
     });
@@ -484,6 +484,7 @@ function wirteToLanguage(keyPrefix, result, isEnd = false) {
                 const sheetValues = worksheet.getSheetValues();
                 for (let index = 4; index < sheetValues.length - 1; index++) {
                     let context = sheetValues[index + 1];
+                    if (!context) continue;
                     info[context[1]] = context;
                 }
 
@@ -515,7 +516,7 @@ function wirteToLanguage(keyPrefix, result, isEnd = false) {
             })
             .catch(err => {
                 // 处理读取文件时出现的错误
-                consoleError('Error reading file:' + err);
+                consoleError('Error reading file 5:' + err);
                 resolve(false);
             });
     });
@@ -536,7 +537,7 @@ async function readLanguage() {
                 const sheetValues = worksheet.getSheetValues();
 
                 sheetValues.forEach((context, index) => {
-                    if (typeof context[1] === "number"){
+                    if (typeof context[1] === "number") {
                         let chineaseIndex = context.findIndex(value => hasChineseCharacters(value));
                         languageConfigData[context[1]] = { id: context[1], key: context[2], value: chineaseIndex !== -1 ? context[chineaseIndex] : context[4] };
                     }
@@ -545,7 +546,7 @@ async function readLanguage() {
             })
             .catch(err => {
                 // 处理读取文件时出现的错误
-                consoleError('Error reading file:' + err);
+                consoleError('Error reading file 1:' + err);
                 resolve(false);
             });
     });
@@ -654,7 +655,7 @@ function run(consoleTEXT, consoleERROR, inPrefix, rootPath, excelPath, languageE
             })
             .catch(err => {
                 // 处理读取文件时出现的错误
-                console.error('Error reading file:' + err);
+                consoleERROR('Error reading file 2:' + err);
             });
     } catch (err) {
         consoleError(err);
@@ -673,13 +674,35 @@ function runMulti(consoleTEXT, consoleERROR, inPrefix, rootPath, excelPath, lang
         pahtExcel = languageExcelPath.replace(/\\/g, '/');
         pathUI = currentDirectoryPath.replace("Language", "") + "UI";
 
-        // // 先找到配置表,去掉没有内容的行
-
         // 读取 Excel 文件
         workbook.xlsx.readFile(pahtExcel)
             .then(async () => {
                 // 读取第一个工作表
                 const worksheet = workbook.getWorksheet(1);
+
+                // 代码中编号对应的内容替换表中的
+                const sheetValues = worksheet.getSheetValues();
+
+                let removeIndexArr = [];
+
+                let needWrite = false;
+
+                // 先找到配置表,去掉没有内容的行
+                sheetValues.forEach((context, index) => {
+                    if (!context || context.length <= 0) {
+                        removeIndexArr.push(index);
+                        needWrite = true;
+                    } else {
+                        if (typeof context[1] === "number") {
+                            let chineaseIndex = context.findIndex(value => hasChineseCharacters(value));
+                            languageConfigData[context[1]] = { id: context[1], key: context[2], value: chineaseIndex !== -1 ? context[chineaseIndex] : context[4] };
+                        }
+                    }
+                });
+
+                for (let index of removeIndexArr) {
+                    worksheet.spliceRows(index, 1);
+                }
 
                 // 是否有Language_多语言表
                 if (!fs.existsSync(pahtExcel)) {
@@ -687,9 +710,12 @@ function runMulti(consoleTEXT, consoleERROR, inPrefix, rootPath, excelPath, lang
                     worksheet.addRow(['id', 'name', 'Value', 'Value_C']);
                     worksheet.addRow(['ID', '字段名', '英文', '中文']);
                     worksheet.addRow(['', 'Key|ReadByName', 'MainLanguage', 'ChildLanguage']);
+                    needWrite = true;
+                }
 
+                if (needWrite) {
                     // 写入
-                    worksheet.writeFile(pahtExcel);
+                    await workbook.xlsx.writeFile(pahtExcel)
                 }
 
                 // 初始化多语言的id
@@ -731,7 +757,7 @@ function runMulti(consoleTEXT, consoleERROR, inPrefix, rootPath, excelPath, lang
             })
             .catch(err => {
                 // 处理读取文件时出现的错误
-                console.error('Error reading file:' + err);
+                consoleERROR('Error reading file 3:' + err);
             });
 
         // const buffer = xlsx.build(data);
