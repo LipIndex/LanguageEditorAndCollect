@@ -8,6 +8,7 @@
  */
 
 var fs = require('fs');
+var flock = require('proper-lockfile');
 var path = require('path');
 const { isString } = require('util');
 const ExcelJS = require('exceljs');
@@ -353,8 +354,8 @@ function tryChangeExcel(dirPath, outResult = {}) {
                                     // 不用加标题
                                     cIndex = indexFind;
                                 } else {
-                                    worksheet.getCell(2 + 1, sheetData[2 + 1].length).value = perfixC;
-                                    cIndex = sheetData[2 + 1].length;
+                                    worksheet.getCell(2 + 1, sheetData[2].length).value = perfixC;
+                                    cIndex = sheetData[2].length;
                                 }
 
                                 // 发现了标题为Language的列
@@ -759,7 +760,6 @@ function runMulti(consoleTEXT, consoleERROR, inPrefix, rootPath, excelPath, lang
                 // 处理读取文件时出现的错误
                 consoleERROR('Error reading file 3:' + err);
             });
-
         // const buffer = xlsx.build(data);
         // fs.writeFileSync(pahtExcel, buffer);
 
