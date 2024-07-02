@@ -115,6 +115,12 @@ function tryChangeUI(dirPath) {
                                 }
                             }
 
+                            // 如果文件需要忽略掉
+                            if (filePath.indexOf("UI\\RankNew") !== -1) {
+                                resolve2(false);
+                                return;
+                            }
+
                             if (!data) {
                                 resolve2(false);
                                 return;
@@ -153,7 +159,12 @@ function tryChangeUI(dirPath) {
                                         }
 
                                         const childPos = !child["Transform"] || !child["Transform"]["Position"] ? { "X": 0, "Y": 0 } : child["Transform"]["Position"];
-                                        const childSize = !child["Transform"] || !child["Transform"]["Size"] ? { "X": 100, "Y": 100 } : child["Transform"]["Size"];
+                                        const childSize = !child["Transform"] || !child["Transform"]["Size"] ? (key.indexOf("MWTextBlock") !== -1 ? { "X": 200, "Y": 100 } : { "X": 100, "Y": 100 }) : child["Transform"]["Size"];
+
+                                        // 如果父类开启了自动排版就不需要加Canvas
+                                        if (parentKey.indexOf("MWCanvas") !== 1 && (parent["AutoLayoutEnable"] && parent["AutoLayout"] && parent["AutoLayout"]["AutoLayout"])) {
+                                            continue;
+                                        }
 
                                         // 如果父类是MWCanvas 并且打开了溢出隐藏 并且不水平自动大小 不是垂直自动大小 没有开启自动布局
                                         if (parentKey.indexOf("MWCanvas") !== 1
@@ -174,7 +185,7 @@ function tryChangeUI(dirPath) {
                                                 parent[newKey] = newCanvas;
                                                 newCanvas.Transform.Position.X = childPos["X"] || 0;
                                                 newCanvas.Transform.Position.Y = childPos["Y"] || 0;
-                                                newCanvas.Transform.Size.X = childSize["X"] || 100;
+                                                newCanvas.Transform.Size.X = childSize["X"] || (key.indexOf("MWTextBlock") !== -1 ? 200 : 100);
                                                 newCanvas.Transform.Size.Y = childSize["Y"] || 100;
                                                 if (child["Transform"] && child["Transform"]["Position"]) {
                                                     delete child["Transform"]["Position"];
@@ -197,7 +208,7 @@ function tryChangeUI(dirPath) {
                                             parent[newKey] = newCanvas;
                                             newCanvas.Transform.Position.X = childPos["X"] || 0;
                                             newCanvas.Transform.Position.Y = childPos["Y"] || 0;
-                                            newCanvas.Transform.Size.X = childSize["X"] || 100;
+                                            newCanvas.Transform.Size.X = childSize["X"] || (key.indexOf("MWTextBlock") !== -1 ? 200 : 100);
                                             newCanvas.Transform.Size.Y = childSize["Y"] || 100;
                                             if (child["Transform"] && child["Transform"]["Position"]) {
                                                 delete child["Transform"]["Position"];

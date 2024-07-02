@@ -11,7 +11,7 @@ var fs = require('fs');
 var path = require('path');
 const xlsx = require('node-xlsx');
 const { isString } = require('util');
-const { runMulti } = require('./ToLanguage');
+const { runMulti } = require('./AddRollCanvas');
 
 const ExcelJS = require('exceljs');
 
@@ -40,18 +40,18 @@ function tryReadMultiMap(dirPath) {
         let cb = () => {
             if (files.length <= 0) {
                 // 单项目改写完成，把本地的Language.xlsx替换最新
-                const languageExcelPathArr = getAllLanguageExcelPath();
+                // const languageExcelPathArr = getAllLanguageExcelPath();
 
                 // 读取 Excel 文件
                 workbook.xlsx.readFile(pahtExcel)
                     .then(() => {
                         // 读取第一个工作表
-                        const worksheet = workbook.getWorksheet(1);
+                        // const worksheet = workbook.getWorksheet(1);
 
-                        // 开始替换所有改动过场景的Language.xlsx
-                        for (let f of languageExcelPathArr) {
-                            workbook.xlsx.writeFile(f);
-                        }
+                        // // 开始替换所有改动过场景的Language.xlsx
+                        // for (let f of languageExcelPathArr) {
+                        //     workbook.xlsx.writeFile(f);
+                        // }
 
                         consoleLog("写入多场景，全部结束,一共写入" + count + "个项目", "green");
                         resolve(true);
