@@ -1,10 +1,10 @@
 {
-  "name": "自动添加滚动框工具3.0",
-  "version": "0.3.0",
+  "name": "自动添加滚动框工具4.1",
+  "version": "0.4.1",
   "private": true,
   "main": "main.js",
   "author": "Peng Li",
-  "description": "自动添加滚动框工具3.0",
+  "description": "自动添加滚动框工具4.1",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

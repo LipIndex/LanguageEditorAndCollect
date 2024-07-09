@@ -160,6 +160,12 @@ function tryChangeUI(dirPath) {
                                         continue;
                                     }
 
+                                    // 如果UI中有ts脚本
+                                    if (forData["TSScript"]) {
+                                        resolve2(false);
+                                        return;
+                                    }
+
                                     let textIsGood = false;
 
                                     // 找到控件
@@ -266,12 +272,6 @@ function tryChangeUI(dirPath) {
                                     cb('utf-16le');
                                     return;
                                 }
-                            }
-
-                            // 如果UI中有ts脚本
-                            if (inputData["TSScript"]) {
-                                resolve2(false);
-                                return;
                             }
 
                             repCb(inputData, "Root");
