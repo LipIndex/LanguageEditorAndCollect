@@ -39,27 +39,28 @@ function tryReadMultiMap(dirPath) {
         let count = 0;
         let cb = () => {
             if (files.length <= 0) {
-                // 单项目改写完成，把本地的Language.xlsx替换最新
-                const languageExcelPathArr = getAllLanguageExcelPath();
+                // // 单项目改写完成，把本地的Language.xlsx替换最新
+                // const languageExcelPathArr = getAllLanguageExcelPath();
 
-                // 读取 Excel 文件
-                workbook.xlsx.readFile(pahtExcel)
-                    .then(() => {
-                        // 读取第一个工作表
-                        const worksheet = workbook.getWorksheet(1);
+                // // 读取 Excel 文件
+                // workbook.xlsx.readFile(pahtExcel)
+                //     .then(() => {
+                //         // 读取第一个工作表
+                //         const worksheet = workbook.getWorksheet(1);
 
-                        // 开始替换所有改动过场景的Language.xlsx
-                        for (let f of languageExcelPathArr) {
-                            workbook.xlsx.writeFile(f);
-                        }
+                //         // 开始替换所有改动过场景的Language.xlsx
+                //         for (let f of languageExcelPathArr) {
+                //             workbook.xlsx.writeFile(f);
+                //         }
 
-                        consoleLog("写入多场景，全部结束,一共写入" + count + "个项目", "green");
-                        resolve(true);
-                    })
-                    .catch(err => {
-                        // 处理读取文件时出现的错误
-                        consoleError('Error reading file:' + err);
-                    });
+                //         consoleLog("写入多场景，全部结束,一共写入" + count + "个项目", "green");
+                //         resolve(true);
+                //     })
+                //     .catch(err => {
+                //         // 处理读取文件时出现的错误
+                //         consoleError('Error reading file:' + err);
+                //     });
+                consoleLog("写入多场景，全部结束,一共写入" + count + "个项目", "green");
                 return;
             }
 
