@@ -110,10 +110,16 @@ function tryChangeScript(dirPath, outResult = {}) {
                                     // 单引号
                                     const onlyRegex = /'([^"]*)'/g;
 
+                                    // 反引号
+                                    const backRegex = /`([^"]*)`/g;
+
                                     // 取出内容
                                     var matches = needChangeContext.match(regex);
                                     if (!matches) {
                                         matches = needChangeContext.match(onlyRegex);
+                                        if (!matches) {
+                                            matches = needChangeContext.match(backRegex);
+                                        }
                                     }
 
                                     // 这里报错一下
@@ -133,7 +139,8 @@ function tryChangeScript(dirPath, outResult = {}) {
                                     if (resultCfg) {
                                         // 如果代码中有"LanUtil.getLanguage(" 这种的， 直接替换 单双引号都要替换
                                         data = data.replace(`${prefix}(\"` + result[0] + "\")", `${prefix}(\"` + resultCfg.key + "\")");
-                                        data = data.replace(`${prefix}(\"` + result[0] + "\')", `${prefix}(\"` + resultCfg.key + "\")");
+                                        data = data.replace(`${prefix}(\'` + result[0] + "\')", `${prefix}(\"` + resultCfg.key + "\")");
+                                        data = data.replace(`${prefix}(\`` + result[0] + "\`)", `${prefix}(\"` + resultCfg.key + "\")");
                                     } else {
                                         let isChange = false;
                                         result[0] = result[0].replace(/\r\n/g, "\n");
