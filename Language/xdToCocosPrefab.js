@@ -13,6 +13,7 @@ var path = require("path");
 const { isString } = require("util");
 const ExcelJS = require("exceljs");
 const { console } = require("inspector/promises");
+const xml2js = require("xml2js");
 
 // 创建一个新的工作簿对象
 const workbook = new ExcelJS.Workbook();
@@ -1140,55 +1141,13 @@ function changeSpine(dirPath, spineInfo) {
   });
 }
 
-// changeSpine("D:/ccs/wjszm-c/assets/res", filesPathInfo).then((result) => {
-//   console.log(filesPathInfo);
-//   console.log(Object.keys(filesPathInfo).length);
-
-//   const targetFolder = "D:/SpineImport";
-//   // 确保目标文件夹存在
-//   if (!fs.existsSync(targetFolder)) {
-//     fs.mkdirSync(targetFolder, { recursive: true });
-//   }
-//   for (let key in filesPathInfo) {
-//     const sourceFile = filesPathInfo[key];
-
-//     // 开始copy
-//     try {
-//       let newFolder = targetFolder + "/" + key.split(".")[0];
-//       if (!fs.existsSync(newFolder)) {
-//         fs.mkdirSync(newFolder, { recursive: true });
-//       }
-//       // 目标文件路径
-//       const targetFile = path.join(newFolder, path.basename(sourceFile));
-//       // 复制文件
-//       fs.copyFileSync(sourceFile, targetFile);
-//       console.log(`File copied to ${targetFile}`);
-//     } catch (err) {
-//       console.error("Error copying file:", err);
-//     }
-//   }
-// });
-
-var spineCollectPathInfo = {};
-
-// 先收集替换的文件路径
-collectSpine("D:/ccs2/wjszm-c/assets/resources", spineCollectPathInfo).then(
-  async (result) => {
-    let arr = [];
-    for (let key in spineCollectPathInfo) {
-      if (key.includes(".prefab")) {
-        arr.push(
-          spineCollectPathInfo[key]
-            .replace("D:\\ccs2\\wjszm-c\\assets\\resources\\", "")
-            .replace(".prefab", "")
-            .replaceAll("\\", "/")
-        );
-      }
-    }
-    console.log(arr);
-    // changeSpine("D:/ccs/wjszm-c/assets/res", spineCollectPathInfo);
-  }
-);
+fs.readFile("D:/Downloads/hunting.svg", "utf8", (err, data) => {
+  if (err) throw err;
+  xml2js.parseString(data, (err, result) => {
+    if (err) throw err;
+    console.log(result); // 输出解析后的 JSON 对象
+  });
+});
 
 // 使用node运行 测试代码
 // var config = {

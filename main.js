@@ -9,6 +9,7 @@ const { isString } = require('util');
 const { dialog } = require('electron/main');
 const { exec } = require('child_process');
 const autoUpdater = require('update-electron-app');
+const { checkUICXLabel } = require('./Language/CheckUICXLabel');
 
 const pathJson = "C:/Users/Public/Config/PathConfig.json";
 let selectProjectName = "";
@@ -139,8 +140,9 @@ async function runProgram(event, prefix, excelPath, languageExcelName) {
     }
 
     // 开始真正的收集工作了
-    runMultiMap(consoleTEXT, consoleERROR, prefix, curSelectProject.ProjectPath, excelPath.replace(/\\/g, '/'), languageExcelName, selectProjectName);
+    // runMultiMap(consoleTEXT, consoleERROR, prefix, curSelectProject.ProjectPath, excelPath.replace(/\\/g, '/'), languageExcelName, selectProjectName);
 
+    checkUI(excelPath.replace(/\\/g, '/'));
     // // 这里接入ToLanguage.bat
     // // 运行 .bat 文件
     // exec.exec(`start cmd /c "${batFilePath}"  ${realPath + "/" + fileName} `, (error, stdout, stderr) => {
